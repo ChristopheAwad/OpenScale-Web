@@ -1,6 +1,10 @@
-# OpenWeight
+# OpenScale-Web
 
 A self-hosted weight tracking application for tracking weight, body measurements, and progress photos.
+
+## Repository
+
+https://github.com/ChristopheAwad/OpenScale-Web
 
 ## Quick Start
 

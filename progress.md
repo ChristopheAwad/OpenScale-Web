@@ -1,5 +1,7 @@
 # Progress
 
+*Development documentation - not part of the main user documentation.*
+
 ## Tech Stack Decisions (COMPLETED)
 - Framework: SvelteKit
 - Storage: LocalStorage + idb-keyval

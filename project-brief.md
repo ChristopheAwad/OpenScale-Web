@@ -111,6 +111,10 @@ Single codebase app for tracking weight, body measurements, and progress photos 
 
 1. Web (responsive)
 
+---
+
+*Development documentation - not part of the main user documentation.*
+
 
 
 ## Steps to Build
