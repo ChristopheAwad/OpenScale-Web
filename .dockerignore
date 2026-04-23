@@ -1,0 +1,14 @@
+.svelte-kit
+node_modules
+.env
+.env.*
+!.env.example
+dist
+build
+.DS_Store
+*.log
+data
+uploads
+*.db
+*.db-wal
+*.db-shm
