@@ -19,8 +19,8 @@ RUN apk add --no-cache python3 make g++
 
 RUN npm rebuild better-sqlite3 --build-from-source
 
-RUN addgroup -g 1000 -S appgroup && \
-    adduser -u 1000 -S appuser -G appgroup
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
 
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/package*.json ./
