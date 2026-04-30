@@ -33,15 +33,20 @@ export const latestEntry = derived(sortedEntries, ($sorted) => $sorted[0]);
 
 export async function checkAuth() {
 	try {
+		console.log('[openweight] CLIENT - checkAuth() called');
 		const res = await fetch(`${API_BASE}/auth/check`, { credentials: 'include' });
+		console.log('[openweight] CLIENT - checkAuth() response:', res.status, res.statusText);
+		
 		const data = await res.json();
+		console.log('[openweight] CLIENT - checkAuth() data:', data);
+		
 		isLoggedIn.set(data.loggedIn);
 		if (data.loggedIn) {
 			currentUser.set(data.username || null);
 		}
 		return data.loggedIn;
 	} catch (error) {
-		console.error('Auth check failed:', error);
+		console.error('[openweight] CLIENT - Auth check failed:', error);
 		isLoggedIn.set(false);
 		return false;
 	}
@@ -93,14 +98,18 @@ export async function loadData() {
 }
 
 export async function addEntry(entry: WeightEntry) {
+	console.log('[openweight] CLIENT - Adding entry:', entry);
 	const res = await fetch(`${API_BASE}/entries`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(entry),
 		credentials: 'include'
 	});
+	console.log('[openweight] CLIENT - Add entry response:', res.status, res.statusText);
+	console.log('[openweight] CLIENT - Add entry response headers:', [...res.headers.entries()]);
 	if (!res.ok) throw new Error('Failed to add entry');
 	const saved = await res.json();
+	console.log('[openweight] CLIENT - Entry saved:', saved);
 	entries.update((e) => [...e, saved]);
 }
 
@@ -164,15 +173,17 @@ export async function deleteGoal(id: string) {
 export async function updatePreferences(partial: Partial<UserPreferences>) {
 	const current = get(preferences);
 	const updated = { ...current, ...partial };
-	console.log('[openweight] Updating preferences:', updated);
+	console.log('[openweight] CLIENT - Updating preferences:', updated);
 	const res = await fetch(`${API_BASE}/preferences`, {
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(updated),
 		credentials: 'include'
 	});
-	console.log('[openweight] Preferences update response:', res.status, res.statusText);
+	console.log('[openweight] CLIENT - Preferences update response:', res.status, res.statusText);
+	console.log('[openweight] CLIENT - Preferences response headers:', [...res.headers.entries()]);
 	if (!res.ok) throw new Error('Failed to update preferences');
 	const saved = await res.json();
+	console.log('[openweight] CLIENT - Preferences saved:', saved);
 	preferences.set(saved);
 }
