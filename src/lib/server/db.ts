@@ -76,6 +76,28 @@ export function initDb() {
 	return _db;
 }
 
+function migrateDb() {
+	// Check if sessions table exists and has the right schema
+	try {
+		const tableInfo = getDb().prepare("PRAGMA table_info(sessions)").all();
+		const hasToken = tableInfo.some((col: any) => col.name === 'token');
+		const hasExpires = tableInfo.some((col: any) => col.name === 'expires');
+		
+		console.log('[openweight] DB migration check - sessions columns:', { hasToken, hasExpires });
+		
+		if (!hasToken || !hasExpires) {
+			console.log('[openweight] DB migration - adding token and expires columns to sessions');
+			getDb().exec(`
+				ALTER TABLE sessions ADD COLUMN token TEXT;
+				ALTER TABLE sessions ADD COLUMN expires TEXT;
+			`);
+		}
+	} catch (error) {
+		// sessions table doesn't exist yet, which is fine (CREATE TABLE IF NOT EXISTS will handle it)
+		console.log('[openweight] DB migration - sessions table not found, will be created');
+	}
+}
+
 export function getDb() {
 	if (!_db) {
 		initDb();
