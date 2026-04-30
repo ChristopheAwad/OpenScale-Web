@@ -15,7 +15,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV DATA_DIR=/app/data
 
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ su-exec
 
 RUN npm rebuild better-sqlite3 --build-from-source
 
@@ -25,11 +25,13 @@ RUN addgroup -g 1001 -S appgroup && \
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY entrypoint.sh /app/entrypoint.sh
 
-RUN mkdir -p /app/data /app/uploads && \
+RUN chmod +x /app/entrypoint.sh && \
+    mkdir -p /app/data /app/uploads && \
     chown -R appuser:appgroup /app
 
-USER appuser
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 EXPOSE 3000
 
