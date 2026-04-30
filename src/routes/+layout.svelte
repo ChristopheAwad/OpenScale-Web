@@ -7,6 +7,7 @@
 	import { checkAuth, isLoggedIn, loadData } from '$lib/stores';
 	import Toast from '$lib/components/Toast.svelte';
 	import QuickAdd from '$lib/components/QuickAdd.svelte';
+	import { APP_VERSION } from '$lib/version';
 
 	let { children } = $props();
 
@@ -68,4 +69,8 @@
 		<QuickAdd />
 	</nav>
 	{/if}
+
+	<div class="fixed bottom-2 right-2 text-xs text-white/30 z-50">
+		v{APP_VERSION}
+	</div>
 </div>
