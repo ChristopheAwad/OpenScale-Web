@@ -20,13 +20,18 @@
 	const publicRoutes = ['/auth/register', '/auth/login'];
 
 	onMount(async () => {
-		const loggedIn = await checkAuth();
+		await checkAuth();
+		if ($isLoggedIn) {
+			await loadData();
+		}
+	});
+
+	$effect(() => {
 		const currentPath = $page.url.pathname;
+		const loggedIn = $isLoggedIn;
 		
 		if (!loggedIn && !publicRoutes.includes(currentPath)) {
 			goto('/auth/login');
-		} else if (loggedIn) {
-			await loadData();
 		}
 	});
 </script>
@@ -45,6 +50,7 @@
 
 	<Toast />
 
+	{#if $isLoggedIn}
 	<nav class="fixed bottom-0 left-0 right-0 bg-surface-100/80 backdrop-blur-xl border-t border-white/5 flex justify-around items-center py-3 px-4 z-50 shadow-2xl shadow-black/50 md:relative md:border-t-0 md:border-b md:bg-transparent md:shadow-none md:max-w-4xl md:mx-auto md:py-4">
 		{#each navItems as item}
 			{@const isActive = $page.url.pathname === item.href}
@@ -61,4 +67,5 @@
 		{/each}
 		<QuickAdd />
 	</nav>
+	{/if}
 </div>
