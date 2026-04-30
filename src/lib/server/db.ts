@@ -73,24 +73,6 @@ export function initDb() {
 		CREATE INDEX IF NOT EXISTS idx_goals_user ON goals(user_id);
 	`);
 
-	// Migration: Check if sessions table has correct schema
-	try {
-		const tableInfo = _db.prepare("PRAGMA table_info(sessions)").all();
-		const hasTokenColumn = tableInfo.some((col: any) => col.name === 'token');
-		
-		if (!hasTokenColumn) {
-			console.log('[openweight] Migrating sessions table to add token column...');
-			_db.exec(`
-				ALTER TABLE sessions ADD COLUMN token TEXT UNIQUE;
-				ALTER TABLE sessions ADD COLUMN expires TEXT;
-			`);
-			console.log('[openweight] Sessions table migrated successfully');
-		}
-	} catch (error) {
-		// Sessions table might not exist yet, that's OK
-		console.log('[openweight] Sessions table migration check:', error.message);
-	}
-
 	return _db;
 }
 
@@ -212,11 +194,25 @@ export const database = {
 			photoPath?: string;
 		}): WeightEntryRow {
 			const id = uuidv4();
+			console.log('[openweight] DB - Creating entry:', { 
+				userId: entry.userId, 
+				weight: entry.weight, 
+				hasNotes: !!entry.notes,
+				hasMeasurements: !!entry.measurements,
+				hasPhoto: !!entry.photoPath
+			});
+			
 			const stmt = getDb().prepare(`
 				INSERT INTO weight_entries 
 				(id, user_id, weight, weight_unit, date, notes, measurements, photo_path) 
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 			`);
+			
+			console.log('[openweight] DB - About to run INSERT with values:', [
+				id, entry.userId, entry.weight, entry.weightUnit, 
+				entry.date, entry.notes || null, entry.measurements || null, entry.photoPath || null
+			]);
+			
 			stmt.run(
 				id,
 				entry.userId,
@@ -227,6 +223,8 @@ export const database = {
 				entry.measurements || null,
 				entry.photoPath || null
 			);
+			
+			console.log('[openweight] DB - Entry created successfully, id:', id);
 			return this.getById(id, entry.userId)!;
 		},
 

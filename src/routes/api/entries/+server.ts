@@ -46,14 +46,21 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		
 		const body = await request.json();
 		console.log('[openweight] POST /api/entries - body:', body);
-
+		
+		// Ensure measurements is a JSON string for DB storage
+		const measurements = body.measurements ? 
+			(typeof body.measurements === 'string' ? body.measurements : JSON.stringify(body.measurements)) 
+			: undefined;
+		
+		console.log('[openweight] POST /api/entries - measurements type:', typeof measurements, 'value:', measurements);
+		
 		const entry = database.entries.create({
 			userId: user.id,
 			weight: body.weight,
 			weightUnit: body.weightUnit,
 			date: body.date,
 			notes: body.notes,
-			measurements: body.measurements ? JSON.stringify(body.measurements) : undefined,
+			measurements,
 			photoPath: body.photoPath
 		});
 
