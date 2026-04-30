@@ -117,17 +117,16 @@ docker run --rm -v openweight-web_app_uploads:/uploads -v $(pwd):/backup alpine 
 
 **Delta:** Uses `/mnt/user/` shares. Create share `openweight` first.
 
-Set PUID=99 and PGID=100 to match Unraid's `nobody:users` convention for Docker bind mounts.
+**Option 1: Run as nobody (recommended for Unraid)**
+Use the pre-built image and run the container as `nobody:nobody` (UID 99) to match Unraid's convention:
 
 ```yaml
 # docker-compose.yml (Unraid)
 version: '3.8'
 services:
   web:
-    # Use pre-built image (recommended)
     image: ghcr.io/christopheawad/openscale-web:latest
-    # Or build locally:
-    # build: .
+    user: "99:100"
     ports:
       - "3000:3000"
     volumes:
@@ -135,13 +134,19 @@ services:
       - /mnt/user/appdata/openweight/uploads:/app/uploads
     environment:
       - NODE_ENV=production
-      - PUID=99
-      - PGID=100
       - SESSION_SECRET=your-secret-key
     restart: unless-stopped
 ```
 
-**Notes:** Ensure Docker is enabled in Unraid Settings. Use Unraid's Docker tab to manage the container. The entrypoint script handles UID/GID mapping automatically.
+**Option 2: Fix host directory permissions**
+SSH into Unraid and run:
+```sh
+chown -R 1001:1001 /mnt/user/appdata/openweight
+chmod -R 755 /mnt/user/appdata/openweight
+```
+Then use the standard docker-compose without `user:` directive.
+
+**Notes:** Ensure Docker is enabled in Unraid Settings. Use Unraid's Docker tab to manage the container. Option 1 is simpler and doesn't require SSH access.
 
 ### TrueNAS SCALE
 
