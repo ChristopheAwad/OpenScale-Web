@@ -19,9 +19,9 @@ export function createSession(userId: string, cookies: Cookies): string {
 	cookies.set(SESSION_COOKIE, cookieValue, {
 		path: '/',
 		httpOnly: true,
-		sameSite: 'none',
-		secure: false,
-		expires
+		sameSite: 'lax'
+		// Note: 'lax' works for same-site HTTP requests (Unraid)
+		// 'none' requires secure:true (HTTPS only) which browsers enforce
 	});
 
 	return sessionId;
