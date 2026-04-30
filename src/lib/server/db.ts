@@ -73,6 +73,24 @@ export function initDb() {
 		CREATE INDEX IF NOT EXISTS idx_goals_user ON goals(user_id);
 	`);
 
+	// Migration: Check if sessions table has correct schema
+	try {
+		const tableInfo = _db.prepare("PRAGMA table_info(sessions)").all();
+		const hasTokenColumn = tableInfo.some((col: any) => col.name === 'token');
+		
+		if (!hasTokenColumn) {
+			console.log('[openweight] Migrating sessions table to add token column...');
+			_db.exec(`
+				ALTER TABLE sessions ADD COLUMN token TEXT UNIQUE;
+				ALTER TABLE sessions ADD COLUMN expires TEXT;
+			`);
+			console.log('[openweight] Sessions table migrated successfully');
+		}
+	} catch (error) {
+		// Sessions table might not exist yet, that's OK
+		console.log('[openweight] Sessions table migration check:', error.message);
+	}
+
 	return _db;
 }
 
