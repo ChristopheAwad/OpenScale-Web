@@ -33,7 +33,7 @@ export const latestEntry = derived(sortedEntries, ($sorted) => $sorted[0]);
 
 export async function checkAuth() {
 	try {
-		const res = await fetch(`${API_BASE}/auth/logout`);
+		const res = await fetch(`${API_BASE}/auth/check`);
 		const data = await res.json();
 		isLoggedIn.set(data.loggedIn);
 		if (data.loggedIn) {
