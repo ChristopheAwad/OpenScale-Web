@@ -59,6 +59,7 @@ OpenWeight uses Docker Compose for all deployments. The only difference between 
 ### Base Docker Compose (Universal)
 
 Pre-built image available at `ghcr.io/christopheawad/openscale-web:latest` - no local build required.
+**Note:** If using local build, ensure Dockerfile includes the entrypoint fix for volume permissions (commit 5bb6a48+).
 
 ```yaml
 # docker-compose.yml
@@ -67,7 +68,7 @@ services:
   web:
     # Option 1: Use pre-built image (recommended)
     image: ghcr.io/christopheawad/openscale-web:latest
-    # Option 2: Build locally (requires Dockerfile in same directory)
+    # Option 2: Build locally (requires Dockerfile with entrypoint fix)
     # build: .
     ports:
       - "3000:3000"
@@ -77,6 +78,7 @@ services:
     environment:
       - NODE_ENV=production
       - SESSION_SECRET=your-secret-key
+      - DATA_DIR=/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
