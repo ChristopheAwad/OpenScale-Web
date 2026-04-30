@@ -43,9 +43,14 @@ OpenWeight is designed to be self-hosted with SQLite for data persistence.
 
 ### Data Storage
 
+**Development:**
 - **Database**: SQLite (`data/openweight.db`)
-- **Photos**: Stored in `data/uploads/`
-- All data persists across restarts via Docker volume
+- **Photos**: Stored in `uploads/`
+
+**Docker Deployment:**
+- **Database**: SQLite in Docker named volume (`app_data`)
+- **Photos**: Stored in Docker named volume (`app_uploads`)
+- All data persists across restarts via Docker named volumes
 
 ## Deployment
 
@@ -67,8 +72,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app/data
-      - ./uploads:/app/uploads
+      - app_data:/app/data
+      - app_uploads:/app/uploads
     environment:
       - NODE_ENV=production
       - SESSION_SECRET=your-secret-key
@@ -79,6 +84,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  app_data:
+  app_uploads:
 ```
 
 **Required environment variables:**
@@ -92,7 +101,15 @@ docker-compose up -d
 ```
 Access at `http://<server-ip>:3000/auth/register` to create your first account.
 
-**Backup:** All data lives in the mapped `./data` and `./uploads` directories. Follow your system's standard backup workflow for these paths.
+**Backup:** Data is stored in Docker named volumes (`app_data` and `app_uploads`). To backup:
+```sh
+# List volumes
+docker volume ls
+
+# Backup named volumes
+docker run --rm -v openweight-web_app_data:/data -v $(pwd):/backup alpine tar czf /backup/app_data_backup.tar.gz -C /data .
+docker run --rm -v openweight-web_app_uploads:/uploads -v $(pwd):/backup alpine tar czf /backup/app_uploads_backup.tar.gz -C /uploads .
+```
 
 ### Unraid
 
@@ -237,7 +254,8 @@ services:
 ┌─────────────────────────────────────────────┐
 │         SQLite (better-sqlite3)             │
 │  - Tables: users, weight_entries, goals   │
-│  - Stored in: data/openweight.db          │
+│  - Stored in: /app/data/openweight.db     │
+│    (Docker: named volume app_data)         │
 └─────────────────────────────────────────────┘
 ```
 
