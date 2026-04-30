@@ -53,12 +53,17 @@ OpenWeight uses Docker Compose for all deployments. The only difference between 
 
 ### Base Docker Compose (Universal)
 
+Pre-built image available at `ghcr.io/christopheawad/openscale-web:latest` - no local build required.
+
 ```yaml
 # docker-compose.yml
 version: '3.8'
 services:
   web:
-    build: .
+    # Option 1: Use pre-built image (recommended)
+    image: ghcr.io/christopheawad/openscale-web:latest
+    # Option 2: Build locally (requires Dockerfile in same directory)
+    # build: .
     ports:
       - "3000:3000"
     volumes:
@@ -98,7 +103,10 @@ Access at `http://<server-ip>:3000/auth/register` to create your first account.
 version: '3.8'
 services:
   web:
-    build: .
+    # Use pre-built image (recommended)
+    image: ghcr.io/christopheawad/openscale-web:latest
+    # Or build locally:
+    # build: .
     ports:
       - "3000:3000"
     volumes:
@@ -121,7 +129,10 @@ services:
 version: '3.8'
 services:
   web:
-    build: .
+    # Use pre-built image (recommended)
+    image: ghcr.io/christopheawad/openscale-web:latest
+    # Or build locally:
+    # build: .
     ports:
       - "3000:3000"
     volumes:
@@ -144,7 +155,10 @@ services:
 version: '3.8'
 services:
   web:
-    build: .
+    # Use pre-built image (recommended)
+    image: ghcr.io/christopheawad/openscale-web:latest
+    # Or build locally:
+    # build: .
     ports:
       - "3000:3000"
     volumes:
@@ -167,7 +181,10 @@ services:
 version: '3.8'
 services:
   web:
-    build: .
+    # Use pre-built image (recommended)
+    image: ghcr.io/christopheawad/openscale-web:latest
+    # Or build locally:
+    # build: .
     ports:
       - "3000:3000"
     volumes:
@@ -190,7 +207,10 @@ services:
 version: '3.8'
 services:
   web:
-    build: .
+    # Use pre-built image (recommended)
+    image: ghcr.io/christopheawad/openscale-web:latest
+    # Or build locally:
+    # build: .
     ports:
       - "3000:3000"
     volumes:
