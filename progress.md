@@ -337,3 +337,40 @@ Conducted full UI/UX audit of OpenWeight Web application built with SvelteKit 2 
 - Toast notification system integrated across all user actions
 - Responsive design applied consistently across all pages
 - Accessibility improvements meet WCAG 2.1 AA standards
+
+---
+
+## Deployment Documentation Update (2026-04-30)
+
+### Overview
+Updated README.md with comprehensive Docker Compose-centric deployment documentation covering multiple self-hosting platforms.
+
+### Changes Made
+1. **Replaced minimal Docker section** with full "Deployment" section
+2. **Added base Docker Compose** with healthcheck, both volumes, all environment variables
+3. **Added system-specific subsections** for popular platforms:
+   - Unraid (uses `/mnt/user/` shares)
+   - TrueNAS SCALE (uses `/mnt/<pool>/` ZFS paths)
+   - CasaOS (uses `/var/lib/casaos/volumes/` paths)
+   - OpenMediaVault (uses `/srv/dev-disk-by-uuid-*` paths)
+   - Proxmox VE (uses `/opt/` standard Linux paths)
+4. **Added GHCR image reference** - Pre-built image available at `ghcr.io/christopheawad/openscale-web:latest`
+5. **Showed both deployment options** for each system:
+   - Option 1: Use pre-built image (recommended)
+   - Option 2: Build locally with `build: .`
+6. **Included system-specific deltas** - what makes each system different (path conventions, permissions, deployment methods)
+7. **No app store references** - Strictly Docker Compose approach as requested
+
+### Files Modified
+- `README.md` - Complete rewrite of deployment section (lines 50-205)
+- Added GHCR image to base compose and all 5 system-specific examples
+
+### Technical Details
+- All compose files use same ports (3000:3000), environment vars, healthcheck
+- Only volume paths differ between systems to match platform conventions
+- GitHub Actions workflow (`.github/workflows/docker.yml`) already pushes to GHCR on master branch
+- Image: `ghcr.io/christopheawad/openscale-web:latest`
+
+### Commits
+1. `docs: update README with comprehensive Docker Compose deployment guide`
+2. `docs: add GHCR pre-built image reference to all Docker Compose examples`
