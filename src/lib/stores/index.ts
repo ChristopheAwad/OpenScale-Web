@@ -40,7 +40,8 @@ export async function checkAuth() {
 			currentUser.set(data.username || null);
 		}
 		return data.loggedIn;
-	} catch {
+	} catch (error) {
+		console.error('Auth check failed:', error);
 		isLoggedIn.set(false);
 		return false;
 	}

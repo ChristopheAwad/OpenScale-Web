@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { addToast } from '$lib/stores/toast';
-	import { checkAuth } from '$lib/stores';
+	import { isLoggedIn, currentUser } from '$lib/stores';
 
 	let username = $state('');
 	let password = $state('');
@@ -27,7 +27,8 @@
 				addToast(error, 'error');
 			} else {
 				addToast('Login successful!', 'success');
-				await checkAuth();
+				isLoggedIn.set(true);
+				currentUser.set(username);
 				goto('/');
 			}
 		} catch {
