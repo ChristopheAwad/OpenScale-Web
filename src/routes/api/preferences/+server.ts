@@ -31,9 +31,11 @@ export const GET: RequestHandler = async ({ cookies }) => {
 
 export const PUT: RequestHandler = async ({ request, cookies }) => {
 	try {
-		console.log('[openweight] PUT /api/preferences - checking session');
+		console.log('[openweight] PUT /api/preferences - headers:', Object.fromEntries(request.headers.entries()));
+		console.log('[openweight] PUT /api/preferences - checking session, cookies present:', !!cookies.get('session'));
+		
 		const user = requireUser(cookies);
-		console.log('[openweight] PUT /api/preferences - user:', user.username);
+		console.log('[openweight] PUT /api/preferences - user authenticated:', user.username);
 		
 		const body = await request.json();
 		console.log('[openweight] PUT /api/preferences - body:', body);
@@ -43,10 +45,11 @@ export const PUT: RequestHandler = async ({ request, cookies }) => {
 			measurementUnit: body.measurementUnit
 		});
 
-		console.log('[openweight] PUT /api/preferences - success');
+		console.log('[openweight] PUT /api/preferences - success, saved:', serializePreferences(prefs));
 		return json(serializePreferences(prefs));
 	} catch (error) {
 		console.error('[openweight] Preferences PUT error:', error);
-		return json({ error: 'Failed to update preferences' }, { status: 400 });
+		console.error('[openweight] Preferences PUT error stack:', error.stack);
+		return json({ error: 'Failed to update preferences', details: error.message }, { status: 400 });
 	}
 };

@@ -38,9 +38,11 @@ export const GET: RequestHandler = async ({ cookies }) => {
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
 	try {
-		console.log('[openweight] POST /api/entries - checking session');
+		console.log('[openweight] POST /api/entries - headers:', Object.fromEntries(request.headers.entries()));
+		console.log('[openweight] POST /api/entries - checking session, cookies present:', !!cookies.get('session'));
+		
 		const user = requireUser(cookies);
-		console.log('[openweight] POST /api/entries - user:', user.username);
+		console.log('[openweight] POST /api/entries - user authenticated:', user.username);
 		
 		const body = await request.json();
 		console.log('[openweight] POST /api/entries - body:', body);
@@ -59,7 +61,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		return json(serializeEntry(entry));
 	} catch (error) {
 		console.error('[openweight] Entries POST error:', error);
-		return json({ error: 'Failed to create entry' }, { status: 400 });
+		console.error('[openweight] Entries POST error stack:', error.stack);
+		return json({ error: 'Failed to create entry', details: error.message }, { status: 400 });
 	}
 };
 

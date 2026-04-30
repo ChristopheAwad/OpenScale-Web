@@ -19,7 +19,8 @@ export function createSession(userId: string, cookies: Cookies): string {
 	cookies.set(SESSION_COOKIE, cookieValue, {
 		path: '/',
 		httpOnly: true,
-		sameSite: 'lax',
+		sameSite: 'none',
+		secure: false,
 		expires
 	});
 
@@ -28,22 +29,37 @@ export function createSession(userId: string, cookies: Cookies): string {
 
 export function getSessionUser(cookies: Cookies): { id: string; username: string } | null {
 	const cookieValue = cookies.get(SESSION_COOKIE);
-	if (!cookieValue) return null;
+	console.log('[openweight] getSessionUser - cookie present:', !!cookieValue);
+	
+	if (!cookieValue) {
+		console.log('[openweight] getSessionUser - no session cookie found');
+		return null;
+	}
 
 	try {
 		const data: SessionData = JSON.parse(cookieValue);
+		console.log('[openweight] getSessionUser - session data:', { userId: data.userId, expires: data.expires });
+		
 		const expires = new Date(data.expires);
+		console.log('[openweight] getSessionUser - session expired:', expires < new Date());
 		
 		if (expires < new Date()) {
+			console.log('[openweight] getSessionUser - session expired, destroying');
 			destroySession(cookies);
 			return null;
 		}
 
 		const user = database.users.getById(data.userId);
-		if (!user) return null;
+		console.log('[openweight] getSessionUser - user found:', !!user);
+		
+		if (!user) {
+			console.log('[openweight] getSessionUser - user not found in database');
+			return null;
+		}
 
 		return { id: user.id, username: user.username };
-	} catch {
+	} catch (error) {
+		console.error('[openweight] getSessionUser - error parsing session:', error);
 		return null;
 	}
 }
