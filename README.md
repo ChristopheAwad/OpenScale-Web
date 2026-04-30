@@ -22,14 +22,6 @@ npm run dev
 
 Visit `http://localhost:5173` to use the app.
 
-### Production (Docker)
-
-```sh
-docker-compose up --build
-```
-
-Visit `http://localhost:3000` to use the app.
-
 ### Production (Node.js)
 
 ```sh
@@ -55,7 +47,11 @@ OpenWeight is designed to be self-hosted with SQLite for data persistence.
 - **Photos**: Stored in `data/uploads/`
 - All data persists across restarts via Docker volume
 
-### Docker Configuration
+## Deployment
+
+OpenWeight uses Docker Compose for all deployments. The only difference between systems is the volume path mapping to match each platform's storage conventions.
+
+### Base Docker Compose (Universal)
 
 ```yaml
 # docker-compose.yml
@@ -67,13 +63,146 @@ services:
       - "3000:3000"
     volumes:
       - ./data:/app/data
+      - ./uploads:/app/uploads
     environment:
       - NODE_ENV=production
       - SESSION_SECRET=your-secret-key
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 ```
 
-Required environment variables:
+**Required environment variables:**
 - `SESSION_SECRET` - Secret key for session cookies (generate a random string)
+- `NODE_ENV=production` - Sets production mode
+- `DATA_DIR=/app/data` - Internal path (no modification needed)
+
+**Commands:**
+```sh
+docker-compose up -d
+```
+Access at `http://<server-ip>:3000/auth/register` to create your first account.
+
+**Backup:** All data lives in the mapped `./data` and `./uploads` directories. Follow your system's standard backup workflow for these paths.
+
+### Unraid
+
+**Delta:** Uses `/mnt/user/` shares. Create share `openweight` first.
+
+```yaml
+# docker-compose.yml (Unraid)
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - /mnt/user/appdata/openweight/data:/app/data
+      - /mnt/user/appdata/openweight/uploads:/app/uploads
+    environment:
+      - NODE_ENV=production
+      - SESSION_SECRET=your-secret-key
+    restart: unless-stopped
+```
+
+**Notes:** Ensure Docker is enabled in Unraid Settings. Use Unraid's Docker tab to manage the container.
+
+### TrueNAS SCALE
+
+**Delta:** Uses ZFS pool paths (`/mnt/<pool>/`). Replace `<pool>` with your pool name.
+
+```yaml
+# docker-compose.yml (TrueNAS SCALE)
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - /mnt/<pool>/appdata/openweight/data:/app/data
+      - /mnt/<pool>/appdata/openweight/uploads:/app/uploads
+    environment:
+      - NODE_ENV=production
+      - SESSION_SECRET=your-secret-key
+    restart: unless-stopped
+```
+
+**Notes:** Set dataset permissions to UID 1000. Enable SSH in System → Settings → Services → SSH to deploy via CLI.
+
+### CasaOS
+
+**Delta:** Uses `/var/lib/casaos/volumes/` default volume paths.
+
+```yaml
+# docker-compose.yml (CasaOS)
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/lib/casaos/volumes/openweight/data:/app/data
+      - /var/lib/casaos/volumes/openweight/uploads:/app/uploads
+    environment:
+      - NODE_ENV=production
+      - SESSION_SECRET=your-secret-key
+    restart: unless-stopped
+```
+
+**Notes:** Deploy via CasaOS Container → + Create → Manual Setup. Built-in monitoring and logs available in CasaOS UI.
+
+### OpenMediaVault
+
+**Delta:** Uses `/srv/dev-disk-by-uuid-*` for mounted disks. Replace `<uuid>` with your disk UUID.
+
+```yaml
+# docker-compose.yml (OpenMediaVault)
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - /srv/dev-disk-by-uuid-<uuid>/appdata/openweight/data:/app/data
+      - /srv/dev-disk-by-uuid-<uuid>/appdata/openweight/uploads:/app/uploads
+    environment:
+      - NODE_ENV=production
+      - SESSION_SECRET=your-secret-key
+    restart: unless-stopped
+```
+
+**Notes:** Find your disk UUID in Storage → Disks. Use SSH or OMV's Docker plugin to deploy.
+
+### Proxmox VE
+
+**Delta:** Run Docker in LXC/VM. Uses standard Linux paths.
+
+```yaml
+# docker-compose.yml (Proxmox VE)
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - /opt/openweight/data:/app/data
+      - /opt/openweight/uploads:/app/uploads
+    environment:
+      - NODE_ENV=production
+      - SESSION_SECRET=your-secret-key
+    restart: unless-stopped
+```
+
+**Notes:** Create an LXC container (Debian/Ubuntu) and install Docker inside. Standard Linux deployment approach.
 
 ### Architecture
 
