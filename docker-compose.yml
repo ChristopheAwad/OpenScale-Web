@@ -6,8 +6,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/app/data
-      - ./uploads:/app/uploads
+      - app_data:/app/data
+      - app_uploads:/app/uploads
     environment:
       - NODE_ENV=production
       - DATA_DIR=/app/data
@@ -18,3 +18,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  app_data:
+  app_uploads:
