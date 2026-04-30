@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { createGoal } from '$lib/models';
 	import { addGoal, goals, setActiveGoal, deleteGoal } from '$lib/stores';
+	import { addToast } from '$lib/stores/toast';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import type { Goal } from '$lib/models';
 
 	let showAddForm = $state(false);
@@ -15,17 +17,32 @@
 
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
-		const goal = createGoal(targetWeight, weightUnit, targetDate || undefined);
-		await addGoal(goal);
-		showAddForm = false;
+		try {
+			const goal = createGoal(targetWeight, weightUnit, targetDate || undefined);
+			await addGoal(goal);
+			showAddForm = false;
+			addToast('Goal created successfully!', 'success');
+		} catch (err) {
+			addToast('Failed to create goal. Please try again.', 'error');
+		}
 	}
 
 	async function handleSetActive(id: string) {
-		await setActiveGoal(id);
+		try {
+			await setActiveGoal(id);
+			addToast('Goal set as active!', 'success');
+		} catch (err) {
+			addToast('Failed to update goal. Please try again.', 'error');
+		}
 	}
 
 	async function handleDelete(id: string) {
-		await deleteGoal(id);
+		try {
+			await deleteGoal(id);
+			addToast('Goal deleted successfully', 'success');
+		} catch (err) {
+			addToast('Failed to delete goal. Please try again.', 'error');
+		}
 	}
 </script>
 
@@ -102,8 +119,12 @@
 	</div>
 
 	{#if $goals.length === 0 && !showAddForm}
-		<div class="card text-center py-8 text-white/40">
-			No goals set yet
-		</div>
+		<EmptyState
+			icon="target"
+			title="No goals set yet"
+			description="Set a target weight to track your progress"
+			actionText="Set First Goal"
+			onAction={() => showAddForm = true}
+		/>
 	{/if}
 </div>

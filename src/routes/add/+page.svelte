@@ -2,6 +2,7 @@
 	import { createWeightEntry } from '$lib/models';
 	import { addEntry } from '$lib/stores';
 	import { goto } from '$app/navigation';
+	import { addToast } from '$lib/stores/toast';
 	import type { MeasurementType } from '$lib/models';
 
 	let weight = $state(70);
@@ -10,6 +11,7 @@
 	let notes = $state('');
 	let photoData = $state<string | null>(null);
 	let measurements = $state<{ type: MeasurementType; value: number }[]>([]);
+	let loading = $state(false);
 
 	const measurementTypes: MeasurementType[] = ['waist', 'chest', 'hips', 'arms', 'thighs'];
 
@@ -35,21 +37,29 @@
 
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
-		const entry = createWeightEntry(
-			weight,
-			weightUnit,
-			date,
-			notes || undefined,
-			measurements.map(m => ({ ...m, unit: 'cm' as const })),
-			photoData || undefined
-		);
-		await addEntry(entry);
-		goto('/');
+		loading = true;
+		try {
+			const entry = createWeightEntry(
+				weight,
+				weightUnit,
+				date,
+				notes || undefined,
+				measurements.map(m => ({ ...m, unit: 'cm' as const })),
+				photoData || undefined
+			);
+			await addEntry(entry);
+			addToast('Weight entry saved successfully!', 'success');
+			goto('/');
+		} catch (err) {
+			addToast('Failed to save entry. Please try again.', 'error');
+		} finally {
+			loading = false;
+		}
 	}
 </script>
 
-<div class="p-4 space-y-4">
-	<h1 class="text-2xl font-bold tracking-tight">Add Entry</h1>
+<div class="p-4 md:p-6 space-y-4 md:space-y-6 max-w-4xl mx-auto">
+	<h1 class="text-2xl md:text-3xl font-bold tracking-tight">Add Entry</h1>
 
 	<form onsubmit={handleSubmit} class="space-y-4">
 		<div class="card space-y-4">
@@ -135,8 +145,8 @@
 			></textarea>
 		</div>
 
-		<button type="submit" class="btn-custom btn-primary-custom w-full">
-			Save Entry
+		<button type="submit" class="btn-custom btn-primary-custom w-full" disabled={loading}>
+			{loading ? 'Saving...' : 'Save Entry'}
 		</button>
 	</form>
 </div>
