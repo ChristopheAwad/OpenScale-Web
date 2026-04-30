@@ -60,6 +60,14 @@ export function initDb() {
 			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 		);
 
+		CREATE TABLE IF NOT EXISTS sessions (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			token TEXT UNIQUE NOT NULL,
+			expires TEXT NOT NULL,
+			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+		);
+
 		CREATE INDEX IF NOT EXISTS idx_entries_user ON weight_entries(user_id);
 		CREATE INDEX IF NOT EXISTS idx_entries_date ON weight_entries(date);
 		CREATE INDEX IF NOT EXISTS idx_goals_user ON goals(user_id);
@@ -116,6 +124,13 @@ export interface PreferencesRow {
 	user_id: string;
 	weight_unit: string;
 	measurement_unit: string;
+}
+
+export interface SessionRow {
+	id: string;
+	user_id: string;
+	token: string;
+	expires: string;
 }
 
 export const database = {
@@ -374,6 +389,28 @@ export const database = {
 
 		reset(userId: string): void {
 			this.set({ userId, weightUnit: 'kg', measurementUnit: 'cm' });
+		}
+	},
+
+	sessions: {
+		create(userId: string, token: string, expires: string): SessionRow {
+			const id = uuidv4();
+			getDb().prepare(
+				'INSERT INTO sessions (id, user_id, token, expires) VALUES (?, ?, ?, ?)'
+			).run(id, userId, token, expires);
+			return getDb().prepare('SELECT * FROM sessions WHERE id = ?').get(id) as SessionRow;
+		},
+
+		getByToken(token: string): SessionRow | undefined {
+			return getDb().prepare('SELECT * FROM sessions WHERE token = ?').get(token) as SessionRow | undefined;
+		},
+
+		deleteByUserId(userId: string): void {
+			getDb().prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+		},
+
+		deleteByToken(token: string): void {
+			getDb().prepare('DELETE FROM sessions WHERE token = ?').run(token);
 		}
 	}
 };

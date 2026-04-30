@@ -4,53 +4,55 @@ import { database } from './db';
 const SESSION_COOKIE = 'session';
 const SESSION_EXPIRY_DAYS = 30;
 
-interface SessionData {
-	userId: string;
-	expires: string;
-}
-
 export function createSession(userId: string, cookies: Cookies): string {
-	const sessionId = crypto.randomUUID();
+	const token = crypto.randomUUID();
 	const expires = new Date();
 	expires.setDate(expires.getDate() + SESSION_EXPIRY_DAYS);
 
-	const cookieValue = JSON.stringify({ userId, expires: expires.toISOString() } as SessionData);
+	// Store session in database with simple token
+	database.sessions.create(userId, token, expires.toISOString());
 
-	cookies.set(SESSION_COOKIE, cookieValue, {
+	// Set a simple token as cookie (no JSON, no special chars)
+	cookies.set(SESSION_COOKIE, token, {
 		path: '/',
 		httpOnly: true
-		// No sameSite - lets browser use default behavior
-		// This allows cookies to work with IP addresses and HTTP
 	});
 
-	return sessionId;
+	console.log('[openweight] createSession - token created:', token.slice(0, 8) + '...');
+	return token;
 }
 
 export function getSessionUser(cookies: Cookies): { id: string; username: string } | null {
-	const cookieValue = cookies.get(SESSION_COOKIE);
-	console.log('[openweight] getSessionUser - cookie present:', !!cookieValue);
-	
-	if (!cookieValue) {
+	const token = cookies.get(SESSION_COOKIE);
+	console.log('[openweight] getSessionUser - token present:', !!token);
+
+	if (!token) {
 		console.log('[openweight] getSessionUser - no session cookie found');
 		return null;
 	}
 
 	try {
-		const data: SessionData = JSON.parse(cookieValue);
-		console.log('[openweight] getSessionUser - session data:', { userId: data.userId, expires: data.expires });
-		
-		const expires = new Date(data.expires);
+		const session = database.sessions.getByToken(token);
+		console.log('[openweight] getSessionUser - session found:', !!session);
+
+		if (!session) {
+			console.log('[openweight] getSessionUser - session not found in database');
+			return null;
+		}
+
+		const expires = new Date(session.expires);
 		console.log('[openweight] getSessionUser - session expired:', expires < new Date());
-		
+
 		if (expires < new Date()) {
 			console.log('[openweight] getSessionUser - session expired, destroying');
+			database.sessions.deleteByToken(token);
 			destroySession(cookies);
 			return null;
 		}
 
-		const user = database.users.getById(data.userId);
+		const user = database.users.getById(session.user_id);
 		console.log('[openweight] getSessionUser - user found:', !!user);
-		
+
 		if (!user) {
 			console.log('[openweight] getSessionUser - user not found in database');
 			return null;
@@ -58,7 +60,7 @@ export function getSessionUser(cookies: Cookies): { id: string; username: string
 
 		return { id: user.id, username: user.username };
 	} catch (error) {
-		console.error('[openweight] getSessionUser - error parsing session:', error);
+		console.error('[openweight] getSessionUser - error:', error);
 		return null;
 	}
 }
@@ -72,6 +74,10 @@ export function requireUser(cookies: Cookies): { id: string; username: string } 
 }
 
 export function destroySession(cookies: Cookies): void {
+	const token = cookies.get(SESSION_COOKIE);
+	if (token) {
+		database.sessions.deleteByToken(token);
+	}
 	cookies.delete(SESSION_COOKIE, { path: '/' });
 }
 
