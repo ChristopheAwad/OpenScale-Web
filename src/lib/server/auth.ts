@@ -15,7 +15,9 @@ export function createSession(userId: string, cookies: Cookies): string {
 	// Set a simple token as cookie (no JSON, no special chars)
 	cookies.set(SESSION_COOKIE, token, {
 		path: '/',
-		httpOnly: true
+		httpOnly: true,
+		secure: false,      // Explicitly disable Secure flag for HTTP
+		sameSite: 'lax'     // Explicitly set sameSite
 	});
 
 	console.log('[openweight] createSession - token created:', token.slice(0, 8) + '...');
