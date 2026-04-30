@@ -33,7 +33,7 @@ export const latestEntry = derived(sortedEntries, ($sorted) => $sorted[0]);
 
 export async function checkAuth() {
 	try {
-		const res = await fetch(`${API_BASE}/auth/check`);
+		const res = await fetch(`${API_BASE}/auth/check`, { credentials: 'include' });
 		const data = await res.json();
 		isLoggedIn.set(data.loggedIn);
 		if (data.loggedIn) {
@@ -49,7 +49,7 @@ export async function checkAuth() {
 
 export async function logout() {
 	try {
-		await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
+		await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
 		isLoggedIn.set(false);
 		currentUser.set(null);
 		entries.set([]);
@@ -64,9 +64,9 @@ export async function loadData() {
 	isLoading.set(true);
 	try {
 		const [entriesRes, goalsRes, prefsRes] = await Promise.all([
-			fetch(`${API_BASE}/entries`),
-			fetch(`${API_BASE}/goals`),
-			fetch(`${API_BASE}/preferences`)
+			fetch(`${API_BASE}/entries`, { credentials: 'include' }),
+			fetch(`${API_BASE}/goals`, { credentials: 'include' }),
+			fetch(`${API_BASE}/preferences`, { credentials: 'include' })
 		]);
 
 		if (!entriesRes.ok || !goalsRes.ok || !prefsRes.ok) {
@@ -96,7 +96,8 @@ export async function addEntry(entry: WeightEntry) {
 	const res = await fetch(`${API_BASE}/entries`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(entry)
+		body: JSON.stringify(entry),
+		credentials: 'include'
 	});
 	if (!res.ok) throw new Error('Failed to add entry');
 	const saved = await res.json();
@@ -107,7 +108,8 @@ export async function updateEntry(entry: WeightEntry) {
 	const res = await fetch(`${API_BASE}/entries`, {
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(entry)
+		body: JSON.stringify(entry),
+		credentials: 'include'
 	});
 	if (!res.ok) throw new Error('Failed to update entry');
 	const saved = await res.json();
@@ -115,7 +117,7 @@ export async function updateEntry(entry: WeightEntry) {
 }
 
 export async function deleteEntry(id: string) {
-	const res = await fetch(`${API_BASE}/entries?id=${id}`, { method: 'DELETE' });
+	const res = await fetch(`${API_BASE}/entries?id=${id}`, { method: 'DELETE', credentials: 'include' });
 	if (!res.ok) throw new Error('Failed to delete entry');
 	entries.update((e) => e.filter((x) => x.id !== id));
 }
@@ -124,7 +126,8 @@ export async function addGoal(goal: Goal) {
 	const res = await fetch(`${API_BASE}/goals`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(goal)
+		body: JSON.stringify(goal),
+		credentials: 'include'
 	});
 	if (!res.ok) throw new Error('Failed to add goal');
 	const saved = await res.json();
@@ -135,7 +138,8 @@ export async function updateGoal(goal: Goal) {
 	const res = await fetch(`${API_BASE}/goals`, {
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(goal)
+		body: JSON.stringify(goal),
+		credentials: 'include'
 	});
 	if (!res.ok) throw new Error('Failed to update goal');
 	const saved = await res.json();
@@ -152,7 +156,7 @@ export async function setActiveGoal(goalId: string) {
 }
 
 export async function deleteGoal(id: string) {
-	const res = await fetch(`${API_BASE}/goals/delete?id=${id}`, { method: 'DELETE' });
+	const res = await fetch(`${API_BASE}/goals/delete?id=${id}`, { method: 'DELETE', credentials: 'include' });
 	if (!res.ok) throw new Error('Failed to delete goal');
 	goals.update((g) => g.filter((x) => x.id !== id));
 }
@@ -160,11 +164,14 @@ export async function deleteGoal(id: string) {
 export async function updatePreferences(partial: Partial<UserPreferences>) {
 	const current = get(preferences);
 	const updated = { ...current, ...partial };
+	console.log('[openweight] Updating preferences:', updated);
 	const res = await fetch(`${API_BASE}/preferences`, {
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(updated)
+		body: JSON.stringify(updated),
+		credentials: 'include'
 	});
+	console.log('[openweight] Preferences update response:', res.status, res.statusText);
 	if (!res.ok) throw new Error('Failed to update preferences');
 	const saved = await res.json();
 	preferences.set(saved);
