@@ -98,19 +98,29 @@ export async function loadData() {
 }
 
 export async function addEntry(entry: WeightEntry) {
-	console.log('[openweight] CLIENT - Adding entry:', entry);
-	const res = await fetch(`${API_BASE}/entries`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(entry),
-		credentials: 'include'
-	});
-	console.log('[openweight] CLIENT - Add entry response:', res.status, res.statusText);
-	console.log('[openweight] CLIENT - Add entry response headers:', [...res.headers.entries()]);
-	if (!res.ok) throw new Error('Failed to add entry');
-	const saved = await res.json();
-	console.log('[openweight] CLIENT - Entry saved:', saved);
-	entries.update((e) => [...e, saved]);
+	console.log('[openweight] CLIENT - addEntry called with:', entry);
+	try {
+		const res = await fetch(`${API_BASE}/entries`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(entry),
+			credentials: 'include'
+		});
+		console.log('[openweight] CLIENT - Add entry response:', res.status, res.statusText);
+		
+		if (!res.ok) {
+			const text = await res.text();
+			console.error('[openweight] CLIENT - Add entry error response:', text);
+			throw new Error('Failed to add entry');
+		}
+		
+		const saved = await res.json();
+		console.log('[openweight] CLIENT - Entry saved:', saved);
+		entries.update((e) => [...e, saved]);
+	} catch (error) {
+		console.error('[openweight] CLIENT - addEntry FAILED:', error);
+		throw error;
+	}
 }
 
 export async function updateEntry(entry: WeightEntry) {
@@ -132,15 +142,29 @@ export async function deleteEntry(id: string) {
 }
 
 export async function addGoal(goal: Goal) {
-	const res = await fetch(`${API_BASE}/goals`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(goal),
-		credentials: 'include'
-	});
-	if (!res.ok) throw new Error('Failed to add goal');
-	const saved = await res.json();
-	goals.update((g) => [...g, saved]);
+	console.log('[openweight] CLIENT - addGoal called with:', goal);
+	try {
+		const res = await fetch(`${API_BASE}/goals`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(goal),
+			credentials: 'include'
+		});
+		console.log('[openweight] CLIENT - Add goal response:', res.status, res.statusText);
+		
+		if (!res.ok) {
+			const text = await res.text();
+			console.error('[openweight] CLIENT - Add goal error response:', text);
+			throw new Error('Failed to add goal');
+		}
+		
+		const saved = await res.json();
+		console.log('[openweight] CLIENT - Goal saved:', saved);
+		goals.update((g) => [...g, saved]);
+	} catch (error) {
+		console.error('[openweight] CLIENT - addGoal FAILED:', error);
+		throw error;
+	}
 }
 
 export async function updateGoal(goal: Goal) {

@@ -19,16 +19,20 @@
 	});
 
 	async function handleQuickAdd() {
+		console.log('[openweight] CLIENT - QuickAdd handleQuickAdd called');
 		try {
+			console.log('[openweight] CLIENT - QuickAdd creating entry');
 			const entry = createWeightEntry(
 				weight,
 				weightUnit,
 				new Date().toISOString().split('T')[0]
 			);
+			console.log('[openweight] CLIENT - QuickAdd entry created:', entry);
 			await addEntry(entry);
 			addToast('Weight entry saved!', 'success');
 			showQuickAdd = false;
 		} catch (err) {
+			console.error('[openweight] CLIENT - QuickAdd error:', err);
 			addToast('Failed to save entry', 'error');
 		}
 	}

@@ -73,6 +73,8 @@ export function initDb() {
 		CREATE INDEX IF NOT EXISTS idx_goals_user ON goals(user_id);
 	`);
 
+	migrateDb();
+
 	return _db;
 }
 

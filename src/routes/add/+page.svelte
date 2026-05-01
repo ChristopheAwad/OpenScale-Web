@@ -36,9 +36,11 @@
 	}
 
 	async function handleSubmit(e: Event) {
+		console.log('[openweight] CLIENT - handleSubmit called');
 		e.preventDefault();
 		loading = true;
 		try {
+			console.log('[openweight] CLIENT - creating entry object');
 			const entry = createWeightEntry(
 				weight,
 				weightUnit,
@@ -47,10 +49,12 @@
 				measurements.map(m => ({ ...m, unit: 'cm' as const })),
 				photoData || undefined
 			);
+			console.log('[openweight] CLIENT - entry created:', entry);
 			await addEntry(entry);
 			addToast('Weight entry saved successfully!', 'success');
 			goto('/');
 		} catch (err) {
+			console.error('[openweight] CLIENT - handleSubmit error:', err);
 			addToast('Failed to save entry. Please try again.', 'error');
 		} finally {
 			loading = false;
@@ -61,7 +65,7 @@
 <div class="p-4 md:p-6 space-y-4 md:space-y-6 max-w-4xl mx-auto">
 	<h1 class="text-2xl md:text-3xl font-bold tracking-tight">Add Entry</h1>
 
-	<form onsubmit={handleSubmit} class="space-y-4">
+	<form onsubmit={(e) => handleSubmit(e)} class="space-y-4">
 		<div class="card space-y-4">
 			<h2 class="section-title">Weight</h2>
 			<div class="flex gap-2">

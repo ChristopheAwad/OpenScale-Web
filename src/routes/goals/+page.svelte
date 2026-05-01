@@ -16,13 +16,17 @@
 	});
 
 	async function handleSubmit(e: Event) {
+		console.log('[openweight] CLIENT - goals handleSubmit called');
 		e.preventDefault();
 		try {
+			console.log('[openweight] CLIENT - creating goal object');
 			const goal = createGoal(targetWeight, weightUnit, targetDate || undefined);
+			console.log('[openweight] CLIENT - goal created:', goal);
 			await addGoal(goal);
 			showAddForm = false;
 			addToast('Goal created successfully!', 'success');
 		} catch (err) {
+			console.error('[openweight] CLIENT - goals handleSubmit error:', err);
 			addToast('Failed to create goal. Please try again.', 'error');
 		}
 	}
@@ -50,7 +54,7 @@
 	<h1 class="text-2xl font-bold tracking-tight">Goals</h1>
 
 	{#if showAddForm}
-		<form onsubmit={handleSubmit} class="card space-y-4">
+		<form onsubmit={(e) => handleSubmit(e)} class="card space-y-4">
 			<h2 class="section-title">Set New Goal</h2>
 			<div class="flex gap-2">
 				<input
