@@ -47,6 +47,47 @@ export const POST: RequestHandler = async ({ request, cookies, locals }) => {
 		
 		const body = await request.json();
 		
+		// Validate required fields
+		if (!body.weight && body.weight !== 0) {
+			return json({ 
+				error: 'Failed to create entry', 
+				details: 'Weight is required' 
+			}, { status: 400 });
+		}
+
+		const weight = parseFloat(body.weight);
+		if (isNaN(weight) || weight <= 0) {
+			return json({ 
+				error: 'Failed to create entry', 
+				details: 'Weight must be a positive number' 
+			}, { status: 400 });
+		}
+
+		if (!body.date) {
+			return json({ 
+				error: 'Failed to create entry', 
+				details: 'Date is required' 
+			}, { status: 400 });
+		}
+
+		// Validate date format (YYYY-MM-DD)
+		const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+		if (!dateRegex.test(body.date)) {
+			return json({ 
+				error: 'Failed to create entry', 
+				details: 'Date must be in YYYY-MM-DD format' 
+			}, { status: 400 });
+		}
+
+		// Validate weight unit
+		const validWeightUnits = ['kg', 'lbs'];
+		if (!body.weightUnit || !validWeightUnits.includes(body.weightUnit)) {
+			return json({ 
+				error: 'Failed to create entry', 
+				details: 'Invalid weight unit. Must be "kg" or "lbs"' 
+			}, { status: 400 });
+		}
+		
 		// Ensure measurements is a JSON string for DB storage
 		const measurements = body.measurements ? 
 			(typeof body.measurements === 'string' ? body.measurements : JSON.stringify(body.measurements)) 
@@ -54,7 +95,7 @@ export const POST: RequestHandler = async ({ request, cookies, locals }) => {
 		
 		const entry = database.entries.create({
 			userId: user.id,
-			weight: body.weight,
+			weight: weight,
 			weightUnit: body.weightUnit,
 			date: body.date,
 			notes: body.notes,
@@ -82,10 +123,58 @@ export const PUT: RequestHandler = async ({ request, cookies, locals }) => {
 		
 		const body = await request.json();
 
+		// Validate required fields
+		if (!body.id) {
+			return json({ 
+				error: 'Failed to update entry', 
+				details: 'Entry ID is required' 
+			}, { status: 400 });
+		}
+
+		if (!body.weight && body.weight !== 0) {
+			return json({ 
+				error: 'Failed to update entry', 
+				details: 'Weight is required' 
+			}, { status: 400 });
+		}
+
+		const weight = parseFloat(body.weight);
+		if (isNaN(weight) || weight <= 0) {
+			return json({ 
+				error: 'Failed to update entry', 
+				details: 'Weight must be a positive number' 
+			}, { status: 400 });
+		}
+
+		if (!body.date) {
+			return json({ 
+				error: 'Failed to update entry', 
+				details: 'Date is required' 
+			}, { status: 400 });
+		}
+
+		// Validate date format (YYYY-MM-DD)
+		const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+		if (!dateRegex.test(body.date)) {
+			return json({ 
+				error: 'Failed to update entry', 
+				details: 'Date must be in YYYY-MM-DD format' 
+			}, { status: 400 });
+		}
+
+		// Validate weight unit
+		const validWeightUnits = ['kg', 'lbs'];
+		if (!body.weightUnit || !validWeightUnits.includes(body.weightUnit)) {
+			return json({ 
+				error: 'Failed to update entry', 
+				details: 'Invalid weight unit. Must be "kg" or "lbs"' 
+			}, { status: 400 });
+		}
+
 		const entry = database.entries.update({
 			id: body.id,
 			userId: user.id,
-			weight: body.weight,
+			weight: weight,
 			weightUnit: body.weightUnit,
 			date: body.date,
 			notes: body.notes,

@@ -112,5 +112,125 @@ describe('Preferences API Integration Tests', () => {
 			const body = await response.json();
 			expect(body.weightUnit).toBe('lbs');
 		});
+
+		describe('failure cases', () => {
+			it('should return 400 for invalid weight unit', async () => {
+				const { PUT } = await import('../../src/routes/api/preferences/+server');
+				const updateData = {
+					weightUnit: 'pounds',
+					measurementUnit: 'cm'
+				};
+
+				const request = new Request('http://localhost/api/preferences', {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(updateData)
+				});
+
+				const response = await PUT({
+					request,
+					cookies: authCookies,
+					locals: { requestId: 'test-pref-invalid-weight' }
+				} as any);
+
+				expect(response.status).toBe(400);
+				const body = await response.json();
+				expect(body.error).toBe('Failed to update preferences');
+				expect(body.details).toContain('Invalid weight unit');
+			});
+
+			it('should return 400 for invalid measurement unit', async () => {
+				const { PUT } = await import('../../src/routes/api/preferences/+server');
+				const updateData = {
+					weightUnit: 'kg',
+					measurementUnit: 'meters'
+				};
+
+				const request = new Request('http://localhost/api/preferences', {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(updateData)
+				});
+
+				const response = await PUT({
+					request,
+					cookies: authCookies,
+					locals: { requestId: 'test-pref-invalid-measurement' }
+				} as any);
+
+				expect(response.status).toBe(400);
+				const body = await response.json();
+				expect(body.error).toBe('Failed to update preferences');
+				expect(body.details).toContain('Invalid measurement unit');
+			});
+
+			it('should return 400 for missing weight unit', async () => {
+				const { PUT } = await import('../../src/routes/api/preferences/+server');
+				const updateData = {
+					measurementUnit: 'cm'
+				};
+
+				const request = new Request('http://localhost/api/preferences', {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(updateData)
+				});
+
+				const response = await PUT({
+					request,
+					cookies: authCookies,
+					locals: { requestId: 'test-pref-missing-weight' }
+				} as any);
+
+				expect(response.status).toBe(400);
+				const body = await response.json();
+				expect(body.error).toBe('Failed to update preferences');
+				expect(body.details).toContain('Invalid weight unit');
+			});
+
+			it('should return 400 for missing measurement unit', async () => {
+				const { PUT } = await import('../../src/routes/api/preferences/+server');
+				const updateData = {
+					weightUnit: 'kg'
+				};
+
+				const request = new Request('http://localhost/api/preferences', {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(updateData)
+				});
+
+				const response = await PUT({
+					request,
+					cookies: authCookies,
+					locals: { requestId: 'test-pref-missing-measurement' }
+				} as any);
+
+				expect(response.status).toBe(400);
+				const body = await response.json();
+				expect(body.error).toBe('Failed to update preferences');
+				expect(body.details).toContain('Invalid measurement unit');
+			});
+
+			it('should return 400 for malformed JSON', async () => {
+				const { PUT } = await import('../../src/routes/api/preferences/+server');
+				
+				const request = new Request('http://localhost/api/preferences', {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: 'not valid json'
+				});
+
+				const response = await PUT({
+					request,
+					cookies: authCookies,
+					locals: { requestId: 'test-pref-malformed' }
+				} as any);
+
+				expect(response.status).toBe(400);
+				const body = await response.json();
+				expect(body.error).toBe('Failed to update preferences');
+			});
+		});
 	});
 });

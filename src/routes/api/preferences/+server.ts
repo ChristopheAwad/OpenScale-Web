@@ -40,9 +40,26 @@ export const PUT: RequestHandler = async ({ request, cookies, locals }) => {
 		
 		const body = await request.json();
 
+		const weightUnit = body.weightUnit;
+		const measurementUnit = body.measurementUnit;
+
+		if (!weightUnit || !['kg', 'lbs'].includes(weightUnit)) {
+			return json({ 
+				error: 'Failed to update preferences', 
+				details: 'Invalid weight unit. Must be "kg" or "lbs"' 
+			}, { status: 400 });
+		}
+
+		if (!measurementUnit || !['cm', 'in'].includes(measurementUnit)) {
+			return json({ 
+				error: 'Failed to update preferences', 
+				details: 'Invalid measurement unit. Must be "cm" or "in"' 
+			}, { status: 400 });
+		}
+
 		const prefs = database.preferences.update(user.id, {
-			weightUnit: body.weightUnit,
-			measurementUnit: body.measurementUnit
+			weightUnit,
+			measurementUnit
 		});
 
 		logger.info('Preferences updated', { requestId: locals.requestId, userId: user.id });
