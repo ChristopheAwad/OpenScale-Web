@@ -2,40 +2,48 @@
 
 ## Commands
 
-- `npm run dev` - Start dev server (port 5173)
+- `npm run dev` - Dev server (port 5173)
 - `npm run build` - Build for production
-- `npm run start` - Build **and** start production server (port 3000) in one command
-- `npm run check` - Type check (runs `svelte-kit sync` first, then `svelte-check`)
-- `npm run check:watch` - Type check in watch mode
-- `npm run test` - Run tests
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Run tests with coverage report
+- `npm run start` - Build and start production server (port 3000)
+- `npm run preview` - Preview production build (port 4173)
+- `npm run check` - Type check (`svelte-kit sync` + `svelte-check`)
+- `npm run test` - Run all tests (`vitest run`)
+- `npx vitest run tests/unit/db.test.ts` - Run a single test file
+- `npm run test:coverage` - Run tests with coverage (`src/lib/server/db.ts` excluded)
 
 ## Environment
 
 - **Node.js 20+ required** - `.npmrc` sets `engine-strict=true`
 - **Database**: SQLite via `better-sqlite3`, stored at `data/openweight.db` (dev) or `$DATA_DIR/openweight.db`
-- **Data directory**: Override with `DATA_DIR` env var (default: `data/` in dev, `/app/data` in Docker)
+- **Production**: Set `SESSION_SECRET` env var (required for cookie signing)
+- **Test environment**: jsdom, setup file at `tests/setup.ts`
 
 ## Architecture
 
-- **Framework**: SvelteKit with `@sveltejs/adapter-node` (Node.js adapter, not adapter-auto)
-- **Svelte 5 runes**: Enabled for all files outside `node_modules` (see `svelte.config.js`)
+- **Framework**: SvelteKit with `@sveltejs/adapter-node` (not adapter-auto)
+- **Svelte 5 runes**: Enabled for all files outside `node_modules` (`svelte.config.js`)
 - **UI**: Skeleton UI + Tailwind CSS v4, dark mode only
-- **Auth**: Session tokens stored in DB (`sessions` table), simple cookie-based (no JWT)
-- **DB init**: Tables created in `src/lib/server/db.ts` on startup via `initDb()`
+- **Auth**: Cookie-based sessions (DB `sessions` table), no JWT
+- **DB init**: Tables created in `src/lib/server/db.ts` on startup via `initDb()`; WAL mode enabled
+- **Tests**: Unit in `tests/unit/`, integration (API) in `tests/integration/`
 
 ## Docker
 
 - Multi-stage build: `node:20-alpine` builder + runner
 - `better-sqlite3` requires native rebuild in container (python3, make, g++ installed)
 - Runs as non-root user (UID 1001, GID 1001 by default)
-- Override user ID with `PUID`/`PGID` env vars for host permission matching (Unraid: PUID=99, PGID=100)
+- Override with `PUID`/`PGID` env vars (Unraid: PUID=99, PGID=100)
 
 ## Gotchas
 
-- No test framework configured - don't expect or look for tests
 - `svelte-kit sync` must run before type checking (handled in `npm run check`)
-- `.svelte-kit/tsconfig.json` is generated - main `tsconfig.json` extends it
-- CI has two Docker workflows (`docker.yml` and `docker-publish.yml`) that appear redundant
-- Production start port is 3000, dev port is 5173
+- `.svelte-kit/tsconfig.json` is generated - `tsconfig.json` extends it
+- Two Docker CI workflows exist: `docker.yml` (simple push) and `docker-publish.yml` (adds attestation + multi-tag)
+- `vitest.config.ts` reuses SvelteKit + Tailwind plugins; tests run in jsdom
+- Uploads stored in `uploads/` (dev) or `/app/uploads` (Docker)
+
+## GitHub Process
+
+- Every feature change or fix must bump the **patch version** (last number) in `package.json` before pushing to GitHub
+- Version format: `major.minor.patch` (e.g., `0.1.2` → `0.1.3`)
+- Commit the version bump alongside your changes, then push to GitHub
