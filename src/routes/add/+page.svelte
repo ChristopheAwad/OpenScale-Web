@@ -53,10 +53,13 @@
 			await addEntry(entry);
 			addToast('Weight entry saved successfully!', 'success');
 			goto('/');
-		} catch (err) {
-			console.error('[openweight] CLIENT - handleSubmit error:', err);
-			addToast('Failed to save entry. Please try again.', 'error');
-		} finally {
+	} catch (err) {
+		const requestId = (err as any)?.requestId;
+		const message = requestId 
+			? `Failed to save entry. Request ID: ${requestId}` 
+			: 'Failed to save entry. Please try again.';
+		addToast(message, 'error');
+	} finally {
 			loading = false;
 		}
 	}

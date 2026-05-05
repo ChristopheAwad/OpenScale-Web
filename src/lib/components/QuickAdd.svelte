@@ -32,8 +32,11 @@
 			addToast('Weight entry saved!', 'success');
 			showQuickAdd = false;
 		} catch (err) {
-			console.error('[openweight] CLIENT - QuickAdd error:', err);
-			addToast('Failed to save entry', 'error');
+			const requestId = (err as any)?.requestId;
+			const message = requestId 
+				? `Failed to save entry. Request ID: ${requestId}` 
+				: 'Failed to save entry';
+			addToast(message, 'error');
 		}
 	}
 </script>

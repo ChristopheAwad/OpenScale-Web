@@ -2,6 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { initDb, database } from '$lib/server/db';
 import { requireUser, getSessionUser } from '$lib/server/auth';
 import { logger } from '$lib/server/logger';
+import { dev } from '$app/environment';
 import type { WeightEntry, Measurement } from '$lib/models';
 
 initDb();
@@ -66,7 +67,11 @@ export const POST: RequestHandler = async ({ request, cookies, locals }) => {
 	} catch (error) {
 		const err = error instanceof Error ? error : new Error(String(error));
 		logger.error('Entries POST error', err, { requestId: locals?.requestId });
-		return json({ error: 'Failed to create entry', details: err.message }, { status: 400 });
+		return json({ 
+			error: 'Failed to create entry', 
+			details: dev ? err.message : undefined,
+			requestId: locals?.requestId 
+		}, { status: 400 });
 	}
 };
 

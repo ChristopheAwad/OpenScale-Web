@@ -98,7 +98,6 @@ export async function loadData() {
 }
 
 export async function addEntry(entry: WeightEntry) {
-	console.log('[openweight] CLIENT - addEntry called with:', entry);
 	try {
 		const res = await fetch(`${API_BASE}/entries`, {
 			method: 'POST',
@@ -106,19 +105,17 @@ export async function addEntry(entry: WeightEntry) {
 			body: JSON.stringify(entry),
 			credentials: 'include'
 		});
-		console.log('[openweight] CLIENT - Add entry response:', res.status, res.statusText);
 		
 		if (!res.ok) {
-			const text = await res.text();
-			console.error('[openweight] CLIENT - Add entry error response:', text);
-			throw new Error('Failed to add entry');
+			const errorData = await res.json();
+			const error = new Error(errorData.error || 'Failed to add entry');
+			(error as any).requestId = errorData.requestId;
+			throw error;
 		}
 		
 		const saved = await res.json();
-		console.log('[openweight] CLIENT - Entry saved:', saved);
 		entries.update((e) => [...e, saved]);
 	} catch (error) {
-		console.error('[openweight] CLIENT - addEntry FAILED:', error);
 		throw error;
 	}
 }
