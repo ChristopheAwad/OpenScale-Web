@@ -1,6 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { initDb, database } from '$lib/server/db';
 import { requireUser, getSessionUser } from '$lib/server/auth';
+import { logger } from '$lib/server/logger';
 
 initDb();
 
@@ -11,45 +12,44 @@ function serializePreferences(row: any) {
 	};
 }
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET: RequestHandler = async ({ cookies, locals }) => {
 	try {
-		console.log('[openweight] GET /api/preferences - checking session');
+		logger.debug('GET /api/preferences - checking session', { requestId: locals.requestId });
 		const user = getSessionUser(cookies);
 		if (!user) {
-			console.log('[openweight] GET /api/preferences - unauthorized: no valid session');
+			logger.debug('GET /api/preferences - unauthorized', { requestId: locals.requestId });
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
-		console.log('[openweight] GET /api/preferences - user:', user.username);
+		logger.debug('GET /api/preferences - user', { requestId: locals.requestId, userId: user.id });
 		const prefs = database.preferences.getOrCreate(user.id);
 		return json(serializePreferences(prefs));
 	} catch (error) {
-		console.error('[openweight] Preferences GET error:', error);
+		const err = error instanceof Error ? error : new Error(String(error));
+		logger.error('Preferences GET error', err, { requestId: locals?.requestId });
 		return json({ error: 'Failed to fetch preferences' }, { status: 500 });
 	}
 };
 
-export const PUT: RequestHandler = async ({ request, cookies }) => {
+export const PUT: RequestHandler = async ({ request, cookies, locals }) => {
 	try {
-		console.log('[openweight] PUT /api/preferences - headers:', Object.fromEntries(request.headers.entries()));
-		console.log('[openweight] PUT /api/preferences - checking session, cookies present:', !!cookies.get('session'));
+		logger.debug('PUT /api/preferences - checking session', { requestId: locals.requestId });
 		
 		const user = requireUser(cookies);
-		console.log('[openweight] PUT /api/preferences - user authenticated:', user.username);
+		logger.debug('PUT /api/preferences - authenticated', { requestId: locals.requestId, userId: user.id });
 		
 		const body = await request.json();
-		console.log('[openweight] PUT /api/preferences - body:', body);
 
 		const prefs = database.preferences.update(user.id, {
 			weightUnit: body.weightUnit,
 			measurementUnit: body.measurementUnit
 		});
 
-		console.log('[openweight] PUT /api/preferences - success, saved:', serializePreferences(prefs));
+		logger.info('Preferences updated', { requestId: locals.requestId, userId: user.id });
 		return json(serializePreferences(prefs));
 	} catch (error) {
-		console.error('[openweight] Preferences PUT error:', error);
-		console.error('[openweight] Preferences PUT error stack:', error.stack);
-		return json({ error: 'Failed to update preferences', details: error.message }, { status: 400 });
+		const err = error instanceof Error ? error : new Error(String(error));
+		logger.error('Preferences PUT error', err, { requestId: locals?.requestId });
+		return json({ error: 'Failed to update preferences', details: err.message }, { status: 400 });
 	}
 };

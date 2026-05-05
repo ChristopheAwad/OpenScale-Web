@@ -1,6 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { initDb, database } from '$lib/server/db';
 import { requireUser, getSessionUser } from '$lib/server/auth';
+import { logger } from '$lib/server/logger';
 
 initDb();
 
@@ -15,33 +16,32 @@ function serializeGoal(row: any) {
 	};
 }
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET: RequestHandler = async ({ cookies, locals }) => {
 	try {
-		console.log('[openweight] GET /api/goals - checking session');
+		logger.debug('GET /api/goals - checking session', { requestId: locals.requestId });
 		const user = getSessionUser(cookies);
 		if (!user) {
-			console.log('[openweight] GET /api/goals - unauthorized: no valid session');
+			logger.debug('GET /api/goals - unauthorized', { requestId: locals.requestId });
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
-		console.log('[openweight] GET /api/goals - user:', user.username);
+		logger.debug('GET /api/goals - user', { requestId: locals.requestId, userId: user.id });
 		const rows = database.goals.getAll(user.id);
 		const goals = rows.map(serializeGoal);
 		return json(goals);
 	} catch (error) {
-		console.error('[openweight] Goals GET error:', error);
+		const err = error instanceof Error ? error : new Error(String(error));
+		logger.error('Goals GET error', err, { requestId: locals?.requestId });
 		return json({ error: 'Failed to fetch goals' }, { status: 500 });
 	}
 };
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, locals }) => {
 	try {
-		console.log('[openweight] POST /api/goals - checking session');
+		logger.debug('POST /api/goals - checking session', { requestId: locals.requestId });
 		const user = requireUser(cookies);
-		console.log('[openweight] POST /api/goals - user:', user.username);
 		
 		const body = await request.json();
-		console.log('[openweight] POST /api/goals - body:', body);
 
 		const existingActive = database.goals.getActive(user.id);
 		if (existingActive && body.isActive) {
@@ -55,22 +55,21 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			targetDate: body.targetDate
 		});
 
-		console.log('[openweight] POST /api/goals - success, id:', goal.id);
+		logger.info('Goal created', { requestId: locals.requestId, userId: user.id, goalId: goal.id });
 		return json(serializeGoal(goal));
 	} catch (error) {
-		console.error('[openweight] Goals POST error:', error);
+		const err = error instanceof Error ? error : new Error(String(error));
+		logger.error('Goals POST error', err, { requestId: locals?.requestId });
 		return json({ error: 'Failed to create goal' }, { status: 400 });
 	}
 };
 
-export const PUT: RequestHandler = async ({ request, cookies }) => {
+export const PUT: RequestHandler = async ({ request, cookies, locals }) => {
 	try {
-		console.log('[openweight] PUT /api/goals - checking session');
+		logger.debug('PUT /api/goals - checking session', { requestId: locals.requestId });
 		const user = requireUser(cookies);
-		console.log('[openweight] PUT /api/goals - user:', user.username);
 		
 		const body = await request.json();
-		console.log('[openweight] PUT /api/goals - body:', body);
 
 		const goal = database.goals.update({
 			id: body.id,
@@ -82,14 +81,15 @@ export const PUT: RequestHandler = async ({ request, cookies }) => {
 		});
 
 		if (!goal) {
-			console.log('[openweight] PUT /api/goals - goal not found');
+			logger.debug('PUT /api/goals - goal not found', { requestId: locals.requestId, goalId: body.id });
 			return json({ error: 'Goal not found' }, { status: 404 });
 		}
 
-		console.log('[openweight] PUT /api/goals - success');
+		logger.info('Goal updated', { requestId: locals.requestId, userId: user.id, goalId: body.id });
 		return json(serializeGoal(goal));
 	} catch (error) {
-		console.error('[openweight] Goals PUT error:', error);
+		const err = error instanceof Error ? error : new Error(String(error));
+		logger.error('Goals PUT error', err, { requestId: locals?.requestId });
 		return json({ error: 'Failed to update goal' }, { status: 400 });
 	}
 };

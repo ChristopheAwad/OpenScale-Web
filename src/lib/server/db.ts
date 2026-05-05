@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import path from 'path';
 import fs from 'fs';
+import { logger } from './logger';
 
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const DB_PATH = path.join(DATA_DIR, 'openweight.db');
@@ -85,10 +86,10 @@ function migrateDb() {
 		const hasToken = tableInfo.some((col: any) => col.name === 'token');
 		const hasExpires = tableInfo.some((col: any) => col.name === 'expires');
 		
-		console.log('[openweight] DB migration check - sessions columns:', { hasToken, hasExpires });
+		logger.debug('DB migration check - sessions columns', { hasToken, hasExpires });
 		
 		if (!hasToken || !hasExpires) {
-			console.log('[openweight] DB migration - adding token and expires columns to sessions');
+			logger.info('DB migration - adding token and expires columns to sessions');
 			getDb().exec(`
 				ALTER TABLE sessions ADD COLUMN token TEXT;
 				ALTER TABLE sessions ADD COLUMN expires TEXT;
@@ -96,7 +97,7 @@ function migrateDb() {
 		}
 	} catch (error) {
 		// sessions table doesn't exist yet, which is fine (CREATE TABLE IF NOT EXISTS will handle it)
-		console.log('[openweight] DB migration - sessions table not found, will be created');
+		logger.debug('DB migration - sessions table not found, will be created');
 	}
 }
 
@@ -218,7 +219,7 @@ export const database = {
 			photoPath?: string;
 		}): WeightEntryRow {
 			const id = uuidv4();
-			console.log('[openweight] DB - Creating entry:', { 
+			logger.debug('DB - Creating entry', { 
 				userId: entry.userId, 
 				weight: entry.weight, 
 				hasNotes: !!entry.notes,
@@ -232,10 +233,13 @@ export const database = {
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 			`);
 			
-			console.log('[openweight] DB - About to run INSERT with values:', [
-				id, entry.userId, entry.weight, entry.weightUnit, 
-				entry.date, entry.notes || null, entry.measurements || null, entry.photoPath || null
-			]);
+			logger.debug('DB - Running INSERT', {
+				id,
+				userId: entry.userId,
+				weight: entry.weight,
+				weightUnit: entry.weightUnit,
+				date: entry.date
+			});
 			
 			stmt.run(
 				id,
@@ -248,7 +252,7 @@ export const database = {
 				entry.photoPath || null
 			);
 			
-			console.log('[openweight] DB - Entry created successfully, id:', id);
+			logger.debug('DB - Entry created successfully', { id });
 			return this.getById(id, entry.userId)!;
 		},
 

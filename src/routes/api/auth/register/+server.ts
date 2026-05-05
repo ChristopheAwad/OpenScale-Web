@@ -1,10 +1,11 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { initDb, database } from '$lib/server/db';
 import { createSession, registerUser } from '$lib/server/auth';
+import { logger } from '$lib/server/logger';
 
 initDb();
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, locals }) => {
 	try {
 		const { username, password } = await request.json();
 
@@ -21,13 +22,16 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		}
 
 		const user = registerUser(username, password);
+		logger.info('User registered', { requestId: locals.requestId, userId: user.id, username });
+		
 		createSession(user.id, cookies);
 
 		return json({ success: true, userId: user.id });
 	} catch (error) {
-		console.error('Register error:', error);
+		const err = error instanceof Error ? error : new Error(String(error));
+		logger.error('Registration error', err, { requestId: locals?.requestId });
 		return json(
-			{ error: error instanceof Error ? error.message : 'Registration failed' },
+			{ error: err.message },
 			{ status: 400 }
 		);
 	}

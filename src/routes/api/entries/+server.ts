@@ -1,6 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { initDb, database } from '$lib/server/db';
 import { requireUser, getSessionUser } from '$lib/server/auth';
+import { logger } from '$lib/server/logger';
 import type { WeightEntry, Measurement } from '$lib/models';
 
 initDb();
@@ -17,42 +18,38 @@ function serializeEntry(row: any): WeightEntry {
 	};
 }
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET: RequestHandler = async ({ cookies, locals }) => {
 	try {
-		console.log('[openweight] GET /api/entries - checking session');
+		logger.debug('GET /api/entries - checking session', { requestId: locals.requestId });
 		const user = getSessionUser(cookies);
 		if (!user) {
-			console.log('[openweight] GET /api/entries - unauthorized: no valid session');
+			logger.debug('GET /api/entries - unauthorized: no valid session', { requestId: locals.requestId });
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
-		console.log('[openweight] GET /api/entries - user:', user.username);
+		logger.debug('GET /api/entries - user', { requestId: locals.requestId, userId: user.id });
 		const rows = database.entries.getAll(user.id);
 		const entries = rows.map(serializeEntry);
 		return json(entries);
 	} catch (error) {
-		console.error('[openweight] Entries GET error:', error);
+		logger.error('Entries GET error', error instanceof Error ? error : new Error(String(error)), { requestId: locals?.requestId });
 		return json({ error: 'Failed to fetch entries' }, { status: 500 });
 	}
 };
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, locals }) => {
 	try {
-		console.log('[openweight] POST /api/entries - headers:', Object.fromEntries(request.headers.entries()));
-		console.log('[openweight] POST /api/entries - checking session, cookies present:', !!cookies.get('session'));
+		logger.debug('POST /api/entries - checking session', { requestId: locals.requestId });
 		
 		const user = requireUser(cookies);
-		console.log('[openweight] POST /api/entries - user authenticated:', user.username);
+		logger.debug('POST /api/entries - authenticated', { requestId: locals.requestId, userId: user.id });
 		
 		const body = await request.json();
-		console.log('[openweight] POST /api/entries - body:', body);
 		
 		// Ensure measurements is a JSON string for DB storage
 		const measurements = body.measurements ? 
 			(typeof body.measurements === 'string' ? body.measurements : JSON.stringify(body.measurements)) 
 			: undefined;
-		
-		console.log('[openweight] POST /api/entries - measurements type:', typeof measurements, 'value:', measurements);
 		
 		const entry = database.entries.create({
 			userId: user.id,
@@ -64,23 +61,21 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			photoPath: body.photoPath
 		});
 
-		console.log('[openweight] POST /api/entries - success, id:', entry.id);
+		logger.info('Entry created', { requestId: locals.requestId, userId: user.id, entryId: entry.id });
 		return json(serializeEntry(entry));
 	} catch (error) {
-		console.error('[openweight] Entries POST error:', error);
-		console.error('[openweight] Entries POST error stack:', error.stack);
-		return json({ error: 'Failed to create entry', details: error.message }, { status: 400 });
+		const err = error instanceof Error ? error : new Error(String(error));
+		logger.error('Entries POST error', err, { requestId: locals?.requestId });
+		return json({ error: 'Failed to create entry', details: err.message }, { status: 400 });
 	}
 };
 
-export const PUT: RequestHandler = async ({ request, cookies }) => {
+export const PUT: RequestHandler = async ({ request, cookies, locals }) => {
 	try {
-		console.log('[openweight] PUT /api/entries - checking session');
+		logger.debug('PUT /api/entries - checking session', { requestId: locals.requestId });
 		const user = requireUser(cookies);
-		console.log('[openweight] PUT /api/entries - user:', user.username);
 		
 		const body = await request.json();
-		console.log('[openweight] PUT /api/entries - body:', body);
 
 		const entry = database.entries.update({
 			id: body.id,
@@ -94,36 +89,36 @@ export const PUT: RequestHandler = async ({ request, cookies }) => {
 		});
 
 		if (!entry) {
-			console.log('[openweight] PUT /api/entries - entry not found');
+			logger.debug('PUT /api/entries - entry not found', { requestId: locals.requestId, entryId: body.id });
 			return json({ error: 'Entry not found' }, { status: 404 });
 		}
 
-		console.log('[openweight] PUT /api/entries - success');
+		logger.info('Entry updated', { requestId: locals.requestId, userId: user.id, entryId: body.id });
 		return json(serializeEntry(entry));
 	} catch (error) {
-		console.error('[openweight] Entries PUT error:', error);
+		const err = error instanceof Error ? error : new Error(String(error));
+		logger.error('Entries PUT error', err, { requestId: locals?.requestId });
 		return json({ error: 'Failed to update entry' }, { status: 400 });
 	}
 };
 
-export const DELETE: RequestHandler = async ({ url, cookies }) => {
+export const DELETE: RequestHandler = async ({ url, cookies, locals }) => {
 	try {
-		console.log('[openweight] DELETE /api/entries - checking session');
+		logger.debug('DELETE /api/entries - checking session', { requestId: locals.requestId });
 		const user = requireUser(cookies);
-		console.log('[openweight] DELETE /api/entries - user:', user.username);
 		
 		const id = url.searchParams.get('id');
-		console.log('[openweight] DELETE /api/entries - id:', id);
 
 		if (!id) {
 			return json({ error: 'Entry ID required' }, { status: 400 });
 		}
 
 		database.entries.delete(id, user.id);
-		console.log('[openweight] DELETE /api/entries - success');
+		logger.info('Entry deleted', { requestId: locals.requestId, userId: user.id, entryId: id });
 		return json({ success: true });
 	} catch (error) {
-		console.error('[openweight] Entries DELETE error:', error);
+		const err = error instanceof Error ? error : new Error(String(error));
+		logger.error('Entries DELETE error', err, { requestId: locals?.requestId });
 		return json({ error: 'Failed to delete entry' }, { status: 400 });
 	}
 };
