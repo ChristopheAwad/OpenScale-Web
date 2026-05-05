@@ -7,6 +7,9 @@
 - `npm run start` - Build **and** start production server (port 3000) in one command
 - `npm run check` - Type check (runs `svelte-kit sync` first, then `svelte-check`)
 - `npm run check:watch` - Type check in watch mode
+- `npm run test` - Run tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
 
 ## Environment
 
